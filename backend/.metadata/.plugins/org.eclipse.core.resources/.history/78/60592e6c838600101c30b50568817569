@@ -1,0 +1,65 @@
+package com.surya.rk.services.auth;
+
+import java.util.Optional;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.surya.rk.dto.SignupRequest;
+import com.surya.rk.dto.CustomerDto;
+import com.surya.rk.entities.Customer;
+import com.surya.rk.enums.UserRole;
+import com.surya.rk.repositories.UserRepository;
+
+import jakarta.annotation.PostConstruct;
+import lombok.AllArgsConstructor;
+
+@Service
+@AllArgsConstructor
+public class AuthServiceImpl implements AuthService {
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder; 
+
+    @PostConstruct
+    public void createAdminAccount() {
+        Optional<Customer> optionalUser = userRepository.findByUserRole(UserRole.ADMIN);
+        if (optionalUser.isEmpty()) {
+            Customer customer = new Customer();
+            customer.setEmail("admin@test.com");
+            customer.setName("admin");
+            customer.setPassword(passwordEncoder.encode("admin"));
+            customer.setUserRole(UserRole.ADMIN);
+            userRepository.save(customer);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public CustomerDto signupUser(SignupRequest signupRequest) {
+        if (userRepository.findFirstByEmail(signupRequest.getEmail()).isPresent()) {
+            throw new IllegalStateException("Email already exists");
+        }
+
+        Customer customer = new Customer();
+        customer.setEmail(signupRequest.getEmail());
+        customer.setName(signupRequest.getName());
+        customer.setPassword(passwordEncoder.encode(signupRequest.getPassword()));
+        customer.setUserRole(UserRole.CUSTOMER);
+        
+        System.out.println("Signup request received:");
+        System.out.println("Name: " + signupRequest.getName());
+        System.out.println("Email: " + signupRequest.getEmail());
+        System.out.println("Password: " + signupRequest.getPassword());
+
+        userRepository.save(customer);
+
+        return customer.getUserDto();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasUserWithEmail(String email) {
+        return userRepository.findFirstByEmail(email).isPresent();
+    }
+}

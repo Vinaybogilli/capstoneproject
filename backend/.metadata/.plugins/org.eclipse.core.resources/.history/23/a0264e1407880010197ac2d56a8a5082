@@ -1,0 +1,16 @@
+package com.vinay.wipro.feign;
+
+
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.PostMapping;
+
+import com.vinay.wipro.entities.AuditDTO;
+
+
+
+@FeignClient(name = "AuditService") // port of Audit Service
+public interface AuditFeign {
+
+    @PostMapping("api/audit/log")
+    AuditDTO logTransaction(AuditDTO audit);
+}

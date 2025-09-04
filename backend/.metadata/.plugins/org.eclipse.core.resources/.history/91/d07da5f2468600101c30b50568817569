@@ -1,0 +1,9 @@
+package com.vinay.wipro.repo;
+
+import org.springframework.data.jpa.repository.support.JpaRepositoryImplementation;
+
+import com.vinay.wipro.entity.Account;
+
+public interface Accountrepo extends JpaRepositoryImplementation<Account, Long> {
+
+}

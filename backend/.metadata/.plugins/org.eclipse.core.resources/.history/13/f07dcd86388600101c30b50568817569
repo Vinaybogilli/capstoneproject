@@ -1,0 +1,18 @@
+package com.vinay.wipro.feign;
+
+
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.*;
+
+@FeignClient(name = "AccountService") // Service name from Eureka
+public interface AccountFeign {
+
+    @GetMapping("/accounts/{id}/balance")
+    Long getBalance(@PathVariable("id") Long accountId);
+
+    @PutMapping("/accounts/{id}/debit")
+    void debitAccount(@PathVariable("id") Long accountId, @RequestParam Long amount);
+
+    @PutMapping("/accounts/{id}/credit")
+    void creditAccount(@PathVariable("id") Long accountId, @RequestParam Long amount);
+}

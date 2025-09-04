@@ -1,0 +1,10 @@
+package com.vinay.wipro.feign;
+
+import org.springframework.cloud.openfeign.FeignClient;
+
+@FeignClient(name="CustomerService")
+public interface AccountFeign {
+	
+	
+
+}

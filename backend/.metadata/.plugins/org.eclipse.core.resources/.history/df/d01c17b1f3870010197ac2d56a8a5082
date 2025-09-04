@@ -1,0 +1,7 @@
+package com.surya.kafka;
+
+public enum PaymentStatus {
+	PENDING,
+    SUCCESS,
+    FAILED
+}

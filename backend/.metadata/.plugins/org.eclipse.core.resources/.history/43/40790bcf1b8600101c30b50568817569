@@ -1,0 +1,5 @@
+package com.vinay.wipro.entity;
+
+public enum AccountTypes {
+
+}

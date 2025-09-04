@@ -1,0 +1,199 @@
+<div class="banking-dashboard">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">
+      <mat-icon>account_balance</mat-icon>
+      <span>TrustBank</span>
+    </div>
+    <nav>
+      <button mat-button (click)="activeSection='customer'" [class.active]="activeSection==='customer'">
+        ➕ Add / Update Customer
+      </button>
+      <button mat-button (click)="activeSection='account'" [class.active]="activeSection==='account'">
+        🏦 Create Account
+      </button>
+      <button mat-button (click)="activeSection='payment'" [class.active]="activeSection==='payment'">
+        💳 Payment
+      </button>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="content">
+    <!-- Top Toolbar -->
+    <mat-toolbar color="primary" class="topbar">
+      <span class="app-title">Customer Banking Dashboard</span>
+      <span class="spacer"></span>
+      <button mat-icon-button>
+        <mat-icon>notifications</mat-icon>
+      </button>
+      <button mat-icon-button>
+        <mat-icon>account_circle</mat-icon>
+      </button>
+    </mat-toolbar>
+
+    <!-- Sections -->
+    <div class="section" *ngIf="activeSection==='customer'">
+      <mat-card class="form-card">
+        <mat-card-title>Add / Update Customer</mat-card-title>
+        <mat-card-content>
+          <form [formGroup]="customerForm" (ngSubmit)="saveCustomer()">
+            <div class="form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Name</mat-label>
+                <input matInput formControlName="name" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Email</mat-label>
+                <input matInput formControlName="email" readonly />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Age</mat-label>
+                <input matInput formControlName="age" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Account Type</mat-label>
+                <mat-select formControlName="accountType">
+                  <mat-option *ngFor="let type of accountTypes" [value]="type">{{ type }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Phone</mat-label>
+                <input matInput formControlName="phoneNumber" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Address</mat-label>
+                <input matInput formControlName="address" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Aadhar</mat-label>
+                <input matInput formControlName="aadharNumber" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>PAN</mat-label>
+                <input matInput formControlName="panNumber" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>KYC Status</mat-label>
+                <mat-select formControlName="kyc">
+                  <mat-option *ngFor="let status of kycStatuses" [value]="status">{{ status }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <button mat-raised-button color="primary" type="submit">
+              {{ customerExists ? 'Update Customer' : 'Add Customer' }}
+            </button>
+          </form>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <div class="section" *ngIf="activeSection==='account'">
+  <mat-card class="form-card">
+    <mat-card-title>Create Account</mat-card-title>
+    <mat-card-content>
+      <form [formGroup]="accountForm" (ngSubmit)="createAccount()">
+        <div class="form-grid">
+          
+          <mat-form-field appearance="outline">
+            <mat-label>Full Name</mat-label>
+            <input matInput formControlName="name" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Username</mat-label>
+            <input matInput formControlName="userName" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>PIN</mat-label>
+            <input matInput formControlName="pin" type="password" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Account Type</mat-label>
+            <mat-select formControlName="accountType">
+              <mat-option *ngFor="let type of accountTypes" [value]="type">
+                {{ type }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+         
+
+        </div>
+
+        <button mat-raised-button color="primary" type="submit">
+          Create Account
+        </button>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+
+    <div class="section" *ngIf="activeSection==='payment'">
+  <mat-card class="form-card">
+    <mat-card-title>Make a Payment</mat-card-title>
+    <mat-card-content>
+      <form [formGroup]="paymentForm" (ngSubmit)="makePayment()">
+
+        <div class="form-grid">
+
+          
+          <mat-form-field appearance="outline">
+            <mat-label>Receiver Account Number</mat-label>
+            <input matInput formControlName="toAccountNumber" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Amount</mat-label>
+            <input matInput type="number" formControlName="amount" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Transaction Type</mat-label>
+            <mat-select formControlName="transactionType">
+              <mat-option value="INTERNAL">Internal</mat-option>
+              <mat-option value="EXTERNAL">External</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <button mat-raised-button color="primary" type="submit">
+          Send Payment
+        </button>
+      </form>
+
+      <h3 class="mt-4">💰 Current Balance: {{ balance | currency:'INR' }}</h3>
+
+      <mat-divider></mat-divider>
+      <h3 class="mt-3">📜 Transaction History</h3>
+      <table class="transaction-table" *ngIf="transactions.length > 0">
+        <tr>
+          <th>Date</th>
+          <th>Type</th>
+          <th>To Account</th>
+          <th>Amount</th>
+          <th>Status</th>
+        </tr>
+        
+      </table>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+  </main>
+</div>
+
+

@@ -1,0 +1,19 @@
+package com.vinay.wipro.feign;
+
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.vinay.wipro.dto.CustomerDTO;
+
+import java.util.List;
+
+@FeignClient(name = "CustomerService")
+public interface CustomerFeign {
+
+    @GetMapping("/internal/getallcustomers")
+    List<CustomerDTO> getAllCustomers(
+            @RequestParam("page") int page,
+            @RequestParam("size") int size
+    );
+}

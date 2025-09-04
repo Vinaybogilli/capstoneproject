@@ -1,0 +1,5 @@
+package com.vinay.wipro.repo;
+
+public interface Auditrepo {
+
+}

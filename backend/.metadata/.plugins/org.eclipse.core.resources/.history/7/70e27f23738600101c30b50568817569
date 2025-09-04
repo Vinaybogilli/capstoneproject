@@ -1,0 +1,84 @@
+package com.surya.rk.services.auth;
+
+import java.util.Optional;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.surya.rk.dto.SignupRequest;
+import com.surya.rk.dto.UserDto;
+import com.surya.rk.entities.Customer;
+import com.surya.rk.enums.UserRole;
+import com.surya.rk.repositories.UserRepository;
+
+import jakarta.annotation.PostConstruct;
+//import jakarta.annotation.PostConstruct;
+import lombok.AllArgsConstructor;
+
+@Service	
+@AllArgsConstructor
+//@Transactional   // applies to all public methods in this class
+public class AuthServiceImpl implements AuthService 
+{
+	
+	
+	private final UserRepository userRepository;
+	
+
+	
+	//@Transactional
+	@PostConstruct
+	public void createAdminAccount() {
+	    Optional<Customer> optinalUser = userRepository.findByUserRole(UserRole.ADMIN);
+	    if (optinalUser.isEmpty()) {
+	        Customer customer = new Customer();
+	        customer.setEmail("admin@test.com");
+	        customer.setName("admin");
+	        customer.setPassword(new BCryptPasswordEncoder().encode("admin"));
+	        customer.setUserRole(UserRole.ADMIN);
+	        userRepository.save(customer);
+	       // ? this save database
+
+	        // Simulated failure------->is just an intentional exception we added to test rollback behavior
+	       if (true) throw new RuntimeException("Oops! Something went wrong");
+
+	        
+	    }
+	}
+
+
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	//No matter what kind of exception happens — checked OR unchecked — roll back the transaction!
+	public UserDto signupUser(SignupRequest signupRequest) {
+	    if (userRepository.findFirstByEmail(signupRequest.getEmail()).isPresent()) {
+	        throw new IllegalStateException("Email already exists");
+	    }
+
+	    Customer customer = new Customer();
+	    customer.setEmail(signupRequest.getEmail());
+	    customer.setName(signupRequest.getName());
+	    customer.setPassword(new BCryptPasswordEncoder().encode(signupRequest.getPassword()));
+	    customer.setUserRole(UserRole.USER);
+
+	    userRepository.save(customer);
+	
+	    return customer.getUserDto();
+	}
+
+	
+	@Transactional(readOnly = true)//I will only fetch data, not modify it.
+	@Override
+	public boolean hasUserWithEmail(String email) {
+		return userRepository.findFirstByEmail(email).isPresent();
+	}
+	
+	
+
+
+
+
+	
+
+	    	
+}

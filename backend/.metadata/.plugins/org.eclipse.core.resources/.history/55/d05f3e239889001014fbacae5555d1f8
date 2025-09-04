@@ -1,0 +1,35 @@
+package com.vinay.wipro.service;
+
+import com.vinay.wipro.dto.CustomerDTO;
+import com.vinay.wipro.feign.AccountFeign;
+import com.vinay.wipro.feign.CustomerFeign;
+
+import lombok.AllArgsConstructor;
+
+import com.vinay.wipro.dto.AccountDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+@AllArgsConstructor
+public class AdminService {
+
+    private final CustomerFeign customerClient;
+    private final AccountFeign accountClient;
+
+    
+
+    public Page<CustomerDTO> getAllCustomers(int page, int size) {
+        List<CustomerDTO> customers = customerClient.getAllCustomers(page, size);
+        return new PageImpl<>(customers, PageRequest.of(page, size), customers.size());
+    }
+
+    public Page<AccountDTO> getAllAccounts(int page, int size) {
+        List<AccountDTO> accounts = accountClient.getAllAccounts(page, size);
+        return new PageImpl<>(accounts, PageRequest.of(page, size), accounts.size());
+    }
+}

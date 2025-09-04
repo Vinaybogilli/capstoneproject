@@ -1,0 +1,15 @@
+package com.vinay.wipro;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+
+@SpringBootApplication
+@EnableMethodSecurity(prePostEnabled = true)
+public class CustomerServiceApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(CustomerServiceApplication.class, args);
+	}
+
+}

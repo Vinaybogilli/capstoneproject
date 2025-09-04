@@ -1,0 +1,82 @@
+package com.vinay.wipro.controller;
+
+import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.vinay.wipro.entities.Customer;
+import com.vinay.wipro.service.CustomerService;
+
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
+
+@RestController
+@AllArgsConstructor
+@RequestMapping("/api/customer")
+public class CustomerController {
+ 
+    private final  CustomerService customerService;
+    
+    @PostMapping("/createcustomer")
+    public ResponseEntity<Customer> createCustomer(@Valid @RequestBody Customer customer)
+    {
+    	Customer savedCustomer=customerService.createCustomer(customer);
+    	return ResponseEntity.ok(savedCustomer);
+    }
+    
+    @PatchMapping("/updatecustomer/{id}")
+    public ResponseEntity<Customer> updateCustomer(@PathVariable Long id , @Valid @RequestBody Customer customer){
+    	Customer updatedCustomer=customerService.createCustomer(customer);
+    	return ResponseEntity.ok(updatedCustomer);
+    }
+    
+    @GetMapping("/getall")
+    public ResponseEntity< List<Customer>>getcustomers(){
+    	List<Customer> customers=customerService.getAllCustomers();
+    	return ResponseEntity.ok(customers);
+    }
+    
+    
+    
+    @GetMapping("/getcustomerbyname/{name}")
+    public ResponseEntity<Customer> getCustomerByName(@PathVariable String name){
+    	Customer getCustomer=customerService.getCustomerByName(name);
+    	return ResponseEntity.ok(getCustomer);
+    }
+    
+    @GetMapping("/getcustomerbyid/{id}")
+    public ResponseEntity<Customer> getCustomerById(@PathVariable Long id){
+    	Customer getCustomer=customerService.getCustomerById(id);
+    	return ResponseEntity.ok(getCustomer);
+    }
+    
+    @GetMapping("/getcustomerbyemail/{email}")
+    public ResponseEntity<Customer> getCustomerByEmail1(@PathVariable String email) {
+        Customer customer = customerService.getCustomerByEmail(email);
+        if (customer != null) {
+            return ResponseEntity.ok(customer);
+        } else {
+            return ResponseEntity.ok(null); 
+        }
+    }
+    
+    @GetMapping("/getemail/{id}")
+    public ResponseEntity<String> getCustomerEmail(@PathVariable Long id){
+    	String email=customerService.getCustomerEmail(id);
+    	if (email != null) {
+            return ResponseEntity.ok(email);
+        } else {
+            return ResponseEntity.ok(null); 
+        }
+    	
+    }
+
+    
+}

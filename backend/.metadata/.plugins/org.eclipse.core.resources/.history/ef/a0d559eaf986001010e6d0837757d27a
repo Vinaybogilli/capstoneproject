@@ -1,0 +1,29 @@
+package com.vinay.wipro.service;
+
+import com.vinay.wipro.dto.CustomerDTO;
+import com.vinay.wipro.dto.AccountDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
+
+import java.util.Collections;
+import java.util.List;
+
+@Service
+public class AdminService {
+
+    // Fetch all customers (placeholder for Feign call or repository)
+    public Page<CustomerDTO> getAllCustomers(int page, int size) {
+        // Example: replace with actual call to Customer Service via Feign
+        List<CustomerDTO> customers = Collections.emptyList(); // fetch real data
+        return new PageImpl<>(customers, PageRequest.of(page, size), customers.size());
+    }
+
+    // Fetch all accounts (placeholder for Feign call or repository)
+    public Page<AccountDTO> getAllAccounts(int page, int size) {
+        // Example: replace with actual call to Account Service via Feign
+        List<AccountDTO> accounts = Collections.emptyList(); // fetch real data
+        return new PageImpl<>(accounts, PageRequest.of(page, size), accounts.size());
+    }
+}

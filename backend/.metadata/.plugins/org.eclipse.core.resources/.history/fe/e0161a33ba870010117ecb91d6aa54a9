@@ -1,0 +1,70 @@
+package com.vinay.wipro.service;
+
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import com.vinay.wipro.entities.Customer;
+import com.vinay.wipro.entities.KycStatus;
+import com.vinay.wipro.repository.CustomerRepo;
+
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
+
+@Service
+@AllArgsConstructor
+public class CustomerServiceImpl implements CustomerService{
+
+	private final CustomerRepo customerRepo;
+	
+	@Override
+	public Customer createCustomer(@Valid Customer customer) {
+		if(customer.getAadharNumber() !=null && customer.getPanNumber() != null) {
+			customer.setKyc(KycStatus.VERIFIED);
+		}
+		
+		return customerRepo.save(customer);
+	}
+
+	@Override
+	public List<Customer> getAllCustomers() {
+		
+		return customerRepo.findAll();
+	}
+
+	@Override
+	public Customer getCustomerByName(String name) {
+		Customer existingcustomer=customerRepo.findByNameIgnoreCase(name);
+				
+		return existingcustomer;
+	}
+
+	@Override
+	public Customer getCustomerById(Long id) {
+		
+		Customer existingcustomer=customerRepo.findById(id).orElseThrow(
+				()->new RuntimeException("not found")
+				);
+		return existingcustomer;
+	}
+
+	@Override
+	public String getCustomerEmailById(Long id) {
+		Customer existingcustomer=customerRepo.findById(id).orElseThrow(
+				()->new RuntimeException("not found")
+				);
+		
+		return existingcustomer.getEmail();
+	}
+
+	@Override
+	public Customer getCustomerByEmail(String email) {
+		Customer existingcustomer=customerRepo.findByEmailIgnoreCase(email).orElseThrow(
+				()->new RuntimeException("not found")
+				);
+		return existingcustomer;
+	}
+	
+	
+
+}

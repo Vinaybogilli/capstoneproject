@@ -1,0 +1,90 @@
+package com.vinay.wipro.service;
+
+import com.vinay.wipro.entities.Payment;
+import com.vinay.wipro.entities.PaymentStatus;
+import com.vinay.wipro.feign.AccountFeign;
+import com.vinay.wipro.kafka.NotificationProducer;
+import com.vinay.wipro.repo.PaymentRepo;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+public class PaymentServiceImpl implements PaymentService {
+
+    private final PaymentRepo paymentRepo;
+    private final AccountFeign accountClient;
+    private final NotificationProducer notificationProducer;
+
+    
+    @Transactional
+    public Payment processInternalPayment(Payment payment) {
+        // Fetch sender account details
+        AccountFeign.AccountResponse sender = accountClient.getAccountByNumber(payment.getFromAccountNumber());
+        if (sender == null) {
+            payment.setStatus(PaymentStatus.FAILED);
+            return paymentRepo.save(payment);
+        }
+
+        // Fetch receiver account details
+        AccountFeign.AccountResponse receiver = accountClient.getAccountByNumber(payment.getToAccountNumber());
+        if (receiver == null) {
+            payment.setStatus(PaymentStatus.FAILED);
+            return paymentRepo.save(payment);
+        }
+
+        // Validate sender balance
+        if (sender.balance < payment.getAmount()) {
+            payment.setStatus(PaymentStatus.FAILED);
+            return paymentRepo.save(payment);
+        }
+
+        // Deduct the amount from sender account
+        sender.balance -= payment.getAmount();
+        accountClient.updateAccountBalance(sender.accountNumber, sender.balance);
+
+        // Add the amount to receiver account
+        receiver.balance += payment.getAmount();
+        accountClient.updateAccountBalance(receiver.accountNumber, receiver.balance);
+
+        // Mark transaction as internal
+        payment.setExternal(false);
+        payment.setStatus(PaymentStatus.SUCCESS);
+
+        Payment saved = paymentRepo.save(payment);
+
+        // Optional: Kafka notification
+        // notificationProducer.sendNotification("Internal Payment Successful: " + saved);
+
+        return saved;
+    }
+
+
+    @Transactional
+    public Payment processExternalPayment(Payment payment) {
+        // Fetch sender account details
+        AccountFeign.AccountResponse sender = accountClient.getAccountByNumber(payment.getFromAccountNumber());
+
+        if (sender.balance < payment.getAmount()) {
+            payment.setStatus(PaymentStatus.FAILED);
+            return paymentRepo.save(payment);
+        }
+
+        // Deduct the amount from sender account
+        sender.balance -= payment.getAmount();
+        accountClient.updateAccountBalance(sender.accountNumber, sender.balance);
+
+        // Mark as external (NEFT/RTGS)
+        payment.setExternal(true);
+        payment.setStatus(PaymentStatus.SUCCESS);
+
+        Payment saved = paymentRepo.save(payment);
+
+        // Kafka notification (optional)
+        //notificationProducer.sendNotification("External Payment (NEFT) Successful: " + saved);
+
+        return saved;
+    }
+
+}

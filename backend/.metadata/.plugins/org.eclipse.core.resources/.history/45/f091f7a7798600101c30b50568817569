@@ -1,0 +1,37 @@
+package com.example.surya.config;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.gateway.route.RouteLocator;
+import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import com.example.surya.filter.JwtAuthenticationFilter;
+
+@Configuration
+public class GatewayConfig {
+
+    @Autowired
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @Bean
+    public RouteLocator routes(RouteLocatorBuilder builder) {
+        return builder.routes()
+
+                // Auth service route - publicly accessible (no JWT required)
+                .route("userauth-service-route", r -> r.path("/api/auth/**")
+                        .uri("lb://USER-AUTHENTICATION-SERVICE"))
+
+                // Customer service route - token required, roles checked inside the service
+                .route("customer-service-route", r -> r.path("/api/customers/**")
+                        .filters(f -> f.filter(jwtAuthenticationFilter.apply(new JwtAuthenticationFilter.Config())))
+                        .uri("lb://CUSTOMER-SERVICE"))
+
+                // Banking service route - token required, role checks inside
+                .route("banking-service-route", r -> r.path("/api/banking/**")
+                        .filters(f -> f.filter(jwtAuthenticationFilter.apply(new JwtAuthenticationFilter.Config())))
+                        .uri("lb://BANKING-SERVICE"))
+
+                .build();
+    }
+}

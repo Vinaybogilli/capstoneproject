@@ -1,0 +1,6 @@
+package com.vinay.wipro.entities;
+
+public enum Account {
+ 
+	SAVINGS,CURRENT
+}

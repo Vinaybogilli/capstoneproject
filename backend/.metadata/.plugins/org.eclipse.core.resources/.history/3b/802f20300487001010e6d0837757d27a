@@ -1,0 +1,18 @@
+package com.vinay.wipro.kafka;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.stereotype.Service;
+
+import com.vinay.wipro.entities.Payment;
+
+@Service
+@RequiredArgsConstructor
+public class PaymentProducer {
+
+    private final KafkaTemplate<String, Payment> kafkaTemplate;
+
+    public void sendPayment(Payment payment) {
+        kafkaTemplate.send("payment-topic", payment);
+    }
+}

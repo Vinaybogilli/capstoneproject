@@ -1,0 +1,22 @@
+package com.vinay.wipro.service;
+
+import com.vinay.wipro.entities.Customer;
+import com.vinay.wipro.entities.KycStatus;
+import com.vinay.wipro.repository.CustomerRepo;
+
+import jakarta.validation.Valid;
+
+public class CustomerServiceImpl implements CustomerService{
+
+	private final CustomerRepo customerRepo;
+	
+	@Override
+	public Customer createCustomer(@Valid Customer customer) {
+		if(customer.getAadharNumber() !=null && customer.getPanNumber() != null) {
+			customer.setKyc(KycStatus.VERIFIED);
+		}
+		
+		return customerRepo.save(customer);
+	}
+
+}

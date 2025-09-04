@@ -1,0 +1,165 @@
+package com.vinay.wipro.service;
+
+import com.vinay.wipro.entities.AuditDTO;
+import com.vinay.wipro.entities.EmailDTO;
+import com.vinay.wipro.entities.Payment;
+import com.vinay.wipro.entities.PaymentStatus;
+import com.vinay.wipro.feign.AccountFeign;
+import com.vinay.wipro.feign.AuditFeign;
+import com.vinay.wipro.feign.CustomerFeign;
+import com.vinay.wipro.kafka.PaymentProducer;
+import com.vinay.wipro.repo.PaymentRepo;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+public class PaymentServiceImpl implements PaymentService {
+
+    private final PaymentRepo paymentRepo;
+    private final AccountFeign accountClient;
+    private final AuditFeign auditFeign;
+    private final CustomerFeign customerFeign;
+    private final PaymentProducer paymentProducer;
+
+    @Transactional
+    public Payment processInternalPayment(Payment payment) {
+        PaymentStatus status = PaymentStatus.SUCCESS;
+
+        // Fetch sender account details
+        AccountFeign.AccountResponse sender = accountClient.getAccountByNumber(payment.getFromAccountNumber());
+        if (sender == null) {
+            status = PaymentStatus.FAILED;
+        }
+
+        // Fetch receiver account details
+        AccountFeign.AccountResponse receiver = null;
+        if (status == PaymentStatus.SUCCESS) {
+            receiver = accountClient.getAccountByNumber(payment.getToAccountNumber());
+            if (receiver == null) {
+                status = PaymentStatus.FAILED;
+            }
+        }
+
+        // Validate sender balance
+        if (status == PaymentStatus.SUCCESS && sender.balance < payment.getAmount()) {
+            status = PaymentStatus.FAILED;
+        }
+
+        // Update balances if successful
+        if (status == PaymentStatus.SUCCESS) {
+            sender.balance -= payment.getAmount();
+            accountClient.updateAccountBalance(sender.accountNumber, sender.balance);
+
+            receiver.balance += payment.getAmount();
+            accountClient.updateAccountBalance(receiver.accountNumber, receiver.balance);
+
+            payment.setExternal(false);
+        }
+
+        payment.setStatus(status);
+
+        // Save in Payment DB only if successful
+        Payment saved = null;
+        if (status == PaymentStatus.SUCCESS) {
+            saved = paymentRepo.save(payment);
+        }
+
+        // Send transaction details to Audit Service (MongoDB) for every transaction
+        AuditDTO auditDTO = new AuditDTO();
+        auditDTO.setFromAccount(payment.getFromAccountNumber());
+        auditDTO.setToAccount(payment.getToAccountNumber());
+        auditDTO.setAmount(payment.getAmount());
+        auditDTO.setStatus(status.name());
+        auditDTO.setExternal(payment.isExternal());
+
+        auditFeign.logTransaction(auditDTO);
+        Long senderid=accountClient.getCustomerId(payment.getFromAccountNumber());
+        Long receiverid=accountClient.getCustomerId(payment.getToAccountNumber());
+        String sendEmail=customerFeign.getEmail(senderid);
+        String receiveEmail=customerFeign.getEmail(receiverid);
+        
+        EmailDTO  emailDTO= new EmailDTO();
+        
+        emailDTO.setEmail(sendEmail);
+        emailDTO.setSubject("Transaction Update");
+        emailDTO.setBody(payment.getStatus());
+        emailDTO.setAmount(payment.getAmount());
+        
+        EmailDTO  receiveemailDTO= new EmailDTO();
+        
+        receiveemailDTO.setEmail(receiveEmail);
+        receiveemailDTO.setSubject("Transaction Update");
+        receiveemailDTO.setBody(payment.getStatus());
+        receiveemailDTO.setAmount(payment.getAmount());
+        paymentProducer.sendPayment(receiveemailDTO);
+        
+        	
+        
+        
+        paymentProducer.sendPayment(emailDTO);
+        return saved;
+    }
+
+    @Transactional
+    public Payment processExternalPayment(Payment payment) {
+        PaymentStatus status = PaymentStatus.SUCCESS;
+
+        // Fetch sender account details
+        AccountFeign.AccountResponse sender = accountClient.getAccountByNumber(payment.getFromAccountNumber());
+        if (sender == null || sender.balance < payment.getAmount()) {
+            status = PaymentStatus.FAILED;
+        }
+
+        if (status == PaymentStatus.SUCCESS) {
+            sender.balance -= payment.getAmount();
+            accountClient.updateAccountBalance(sender.accountNumber, sender.balance);
+
+            payment.setExternal(true);
+        }
+
+        payment.setStatus(status);
+
+        // Save in Payment DB only if successful
+        Payment saved = null;
+        if (status == PaymentStatus.SUCCESS) {
+            saved = paymentRepo.save(payment);
+        }
+
+        // Send transaction details to Audit Service (MongoDB)
+        AuditDTO auditDTO = new AuditDTO();
+        auditDTO.setFromAccount(payment.getFromAccountNumber());
+        auditDTO.setToAccount(payment.getToAccountNumber());
+        auditDTO.setAmount(payment.getAmount());
+        auditDTO.setStatus(status.name());
+        auditDTO.setExternal(payment.isExternal());
+        
+        
+
+        auditFeign.logTransaction(auditDTO);
+        Long senderid=accountClient.getCustomerId(payment.getFromAccountNumber());
+        Long receiverid=accountClient.getCustomerId(payment.getToAccountNumber());
+        String sendEmail=customerFeign.getEmail(senderid);
+        String receiveEmail=customerFeign.getEmail(receiverid);
+        
+        EmailDTO  senderemailDTO= new EmailDTO();
+        
+	        senderemailDTO.setEmail(sendEmail);
+	        senderemailDTO.setSubject("Transaction Update");
+	        senderemailDTO.setBody(payment.getStatus());
+	        senderemailDTO.setAmount(payment.getAmount());
+	        paymentProducer.sendPayment(senderemailDTO);
+	        
+	      
+	        EmailDTO  receiveemailDTO= new EmailDTO();
+	        
+	        receiveemailDTO.setEmail(receiveEmail);
+	        receiveemailDTO.setSubject("Transaction Update");
+	        receiveemailDTO.setBody(payment.getStatus());
+	        receiveemailDTO.setAmount(payment.getAmount());
+	        paymentProducer.sendPayment(receiveemailDTO);
+	    
+        return saved;
+    }
+}

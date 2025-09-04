@@ -1,0 +1,107 @@
+package com.example.surya.filter;
+
+import com.example.surya.utils.JwtUtil;
+import org.springframework.cloud.gateway.filter.GatewayFilter;
+import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.http.server.reactive.ServerHttpResponse;
+import org.springframework.stereotype.Component;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
+
+@Component
+public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAuthenticationFilter.Config> {
+
+    private final JwtUtil jwtUtil;
+
+    public JwtAuthenticationFilter(JwtUtil jwtUtil) {
+        super(Config.class);
+        this.jwtUtil = jwtUtil;
+    }
+
+    @Override
+    public GatewayFilter apply(Config config) {
+        return (exchange, chain) -> {
+
+            ServerHttpRequest request = exchange.getRequest();
+            String path = request.getURI().getPath();
+
+            // -----------------------------
+            // 1️⃣ Skip JWT check for public endpoints
+            // -----------------------------
+            if (path.startsWith("/api/auth/")) {
+                return chain.filter(exchange);
+            }
+
+            // -----------------------------
+            // 2️⃣ Check Authorization header
+            // -----------------------------
+            String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return unauthorized(exchange, "Missing or invalid Authorization header");
+            }
+
+            String token = authHeader.substring(7);
+
+            // -----------------------------
+            // 3️⃣ Validate JWT
+            // -----------------------------
+            if (!jwtUtil.validateToken(token)) {
+                return unauthorized(exchange, "Invalid or expired JWT token");
+            }
+
+            // -----------------------------
+            // 4️⃣ Role-based access (optional)
+            // -----------------------------
+            String userRole = jwtUtil.extractRole(token);
+            if (config.requiresRole) {
+                if (userRole == null || !isAuthorized(userRole, config.requiredRole)) {
+                    return forbidden(exchange, "Insufficient permissions");
+                }
+            }
+
+            // -----------------------------
+            // 5️⃣ Add user info headers for downstream services
+            // -----------------------------
+            ServerHttpRequest modifiedRequest = request.mutate()
+                    .header("X-Auth-User-Email", jwtUtil.extractUsername(token))
+                    .header("X-Auth-User-Role", userRole)
+                    .build();
+
+            return chain.filter(exchange.mutate().request(modifiedRequest).build());
+        };
+    }
+
+    private boolean isAuthorized(String userRole, String requiredRole) {
+        if ("ADMIN".equals(userRole)) return true;       // Admin can access everything
+        return userRole.equals(requiredRole);           // Other roles must match
+    }
+
+    private Mono<Void> unauthorized(ServerWebExchange exchange, String message) {
+        ServerHttpResponse response = exchange.getResponse();
+        response.setStatusCode(HttpStatus.UNAUTHORIZED);
+        return response.setComplete();
+    }
+
+    private Mono<Void> forbidden(ServerWebExchange exchange, String message) {
+        ServerHttpResponse response = exchange.getResponse();
+        response.setStatusCode(HttpStatus.FORBIDDEN);
+        return response.setComplete();
+    }
+
+    public static class Config {
+        private boolean requiresRole = false;
+        private String requiredRole;
+
+        public boolean isRequiresRole() {
+            return requiresRole;
+        }
+
+        public void setRequiredRole(String requiredRole) {
+            this.requiredRole = requiredRole;
+            this.requiresRole = true;
+        }
+    }
+}

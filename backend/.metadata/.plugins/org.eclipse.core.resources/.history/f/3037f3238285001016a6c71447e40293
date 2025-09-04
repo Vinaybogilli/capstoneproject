@@ -1,0 +1,11 @@
+package com.vinay.wipro.service;
+
+import com.vinay.wipro.entities.Customer;
+
+import jakarta.validation.Valid;
+
+public interface CustomerService {
+
+	Customer createCustomer(@Valid Customer customer);
+
+}

@@ -1,0 +1,11 @@
+package com.vinay.wipro.feign;
+
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+
+@FeignClient(name = "CUSTOMERSERVICE")
+public interface CustomerFeign {
+    @GetMapping("/api/customer/email/{id}")
+    String getEmail(@PathVariable("id") Long id);
+}

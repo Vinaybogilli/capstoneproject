@@ -1,0 +1,7 @@
+package com.vinay.wipro.repository;
+
+import org.springframework.data.jpa.repository.support.JpaRepositoryImplementation;
+
+public interface CustomerRepo extends JpaRepositoryImplementation<T, ID> {
+
+}

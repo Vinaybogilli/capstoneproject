@@ -1,0 +1,16 @@
+package com.vinay.wipro.feign;
+
+import com.vinay.wipro.dto.AccountDTO;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import java.util.List;
+
+@FeignClient(name = "AccountService")
+public interface AccountFeign {
+    @GetMapping("/api/bank/getallaccounts")
+    List<AccountDTO> getAllAccounts(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size
+    );
+}

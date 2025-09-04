@@ -1,0 +1,22 @@
+package com.vinay.wipro.feign;
+
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+
+@FeignClient(name = "AccountService") // replace with real host
+public interface AccountFeign {
+
+    @GetMapping("/api/bank/{accountNumber}")
+    AccountResponse getAccountByNumber(@PathVariable String accountNumber);
+
+    @PutMapping("/api/bank/updatebalance/{accountNumber}/{balance}")
+    void updateAccountBalance(@PathVariable String accountNumber, @PathVariable Double balance);
+
+    class AccountResponse {
+        public String accountNumber;
+        public String accountHolderName;
+        public Double balance;
+    }
+}

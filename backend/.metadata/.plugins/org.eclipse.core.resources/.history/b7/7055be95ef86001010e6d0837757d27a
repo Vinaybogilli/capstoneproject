@@ -1,0 +1,15 @@
+package com.vinay.wipro.service;
+
+public class AdminService {
+
+	public Object getAllCustomers(int page, int size) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public Object getAllAccounts(int page, int size) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+}

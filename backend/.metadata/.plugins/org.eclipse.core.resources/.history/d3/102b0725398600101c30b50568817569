@@ -1,0 +1,49 @@
+package com.vinay.wipro.service;
+
+import com.vinay.wipro.entities.Payment;
+import com.vinay.wipro.entities.PaymentStatus;
+
+import com.vinay.wipro.feign.AccountFeign;
+import com.vinay.wipro.repo.PaymentRepo;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+public class PaymentServiceImpl implements PaymentService {
+
+    @Autowired
+    private PaymentRepo paymentRepository;
+
+    @Autowired
+    private AccountFeign accountClient;
+
+    @Override
+    @Transactional
+    public Payment processPayment(Payment payment) {
+        try {
+            
+            Long senderBalance = accountClient.getBalance(payment.getSenderAccountId());
+
+            if (senderBalance < payment.getAmount()) {
+                payment.setStatus(PaymentStatus.FAILED);
+                return paymentRepository.save(payment);
+            }
+
+            // Deduct from sender
+            accountClient.debitAccount(payment.getSenderAccountId(), payment.getAmount());
+
+            // Credit receiver
+            accountClient.creditAccount(payment.getReceiverAccountId(), payment.getAmount());
+
+            payment.setStatus(PaymentStatus.SUCCESS);
+            return paymentRepository.save(payment);
+
+        } catch (Exception e) {
+            payment.setStatus(PaymentStatus.FAILED);
+            return paymentRepository.save(payment);
+        }
+    }
+}
+

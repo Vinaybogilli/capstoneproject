@@ -1,0 +1,5 @@
+package com.vinay.wipro.exception;
+
+public class GlobalExceptionalHandler {
+
+}

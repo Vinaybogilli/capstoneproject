@@ -1,0 +1,5 @@
+package com.surya.rk.dto;
+
+public class CustomerDto {
+
+}

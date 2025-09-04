@@ -1,0 +1,52 @@
+package com.example.surya.config;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.gateway.route.RouteLocator;
+import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import com.example.surya.filter.JwtAuthenticationFilter;
+
+@Configuration
+public class GatewayConfig {
+
+    @Autowired
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @Bean
+    public RouteLocator routes(RouteLocatorBuilder builder) {
+        return builder.routes()
+
+                // Auth service route - publicly accessible (no JWT required)
+                .route("userauth-service-route", r -> r.path("/api/auth/**")
+                        .uri("lb://USER-AUTHENTICATION-SERVICE"))
+
+                // Customer service route - token required, roles checked inside the service
+                .route("customer-service-route", r -> r.path("/api/customer/**")
+                        .filters(f -> f.filter(jwtAuthenticationFilter.apply(new JwtAuthenticationFilter.Config())))
+                        .uri("lb://CustomerService"))
+
+                // Account service route - token required, role checks inside
+                .route("account-service-route", r -> r.path("/api/bank/**")
+                        .filters(f -> f.filter(jwtAuthenticationFilter.apply(new JwtAuthenticationFilter.Config())))
+                        .uri("lb://AccountService"))
+
+                // Payment service route - token required, role checks inside
+                .route("payment-service-route", r -> r.path("payments/**")
+                        .filters(f -> f.filter(jwtAuthenticationFilter.apply(new JwtAuthenticationFilter.Config())))
+                        .uri("lb://PaymentService"))
+
+                // Audit service route - token required, role checks inside
+                .route("audit-service-route", r -> r.path("/api/audit/**")
+                        .filters(f -> f.filter(jwtAuthenticationFilter.apply(new JwtAuthenticationFilter.Config())))
+                        .uri("lb://AUDIT-SERVICE"))
+
+                // Notification service route - token required, role checks inside
+                .route("notification-service-route", r -> r.path("/api/notification/**")
+                        .filters(f -> f.filter(jwtAuthenticationFilter.apply(new JwtAuthenticationFilter.Config())))
+                        .uri("lb://NOTIFICATION-SERVICE"))
+
+                .build();
+    }
+}

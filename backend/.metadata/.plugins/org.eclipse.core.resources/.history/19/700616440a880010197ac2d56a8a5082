@@ -1,0 +1,12 @@
+package com.vinay.wipro.feign;
+
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+
+@FeignClient(name = "CustomerService") // service name registered in Eureka or service registry
+public interface CustomerFeign {
+
+    @GetMapping("/api/customer/email/{id}") // full path exposed by Customer Service
+    String getEmail(@PathVariable("id") Long id); // use @PathVariable
+}

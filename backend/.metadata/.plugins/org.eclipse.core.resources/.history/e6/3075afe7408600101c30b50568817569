@@ -1,0 +1,29 @@
+package com.vinay.wipro.controller;
+
+import com.vinay.wipro.dto.PaymentRequest;
+import com.vinay.wipro.entities.Payment;
+import com.vinay.wipro.service.PaymentService;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/payments")
+public class PaymentController {
+
+    private final PaymentService paymentService;
+
+    public PaymentController(PaymentService paymentService) {
+        this.paymentService = paymentService;
+    }
+
+    // Internal Transfer (same bank)
+    @PostMapping("/internal")
+    public Payment internalPayment(@RequestBody PaymentRequest request) {
+        return paymentService.processInternalTransaction(request);
+    }
+
+    // External Transfer (NEFT)
+    @PostMapping("/external")
+    public Payment externalPayment(@RequestBody PaymentRequest request) {
+        return paymentService.processExternalTransaction(request);
+    }
+}

@@ -1,0 +1,137 @@
+package com.vinay.wipro.service;
+
+import com.vinay.wipro.entities.AuditDTO;
+import com.vinay.wipro.entities.EmailDTO;
+import com.vinay.wipro.entities.Payment;
+import com.vinay.wipro.entities.PaymentStatus;
+import com.vinay.wipro.feign.AccountFeign;
+import com.vinay.wipro.feign.AuditFeign;
+import com.vinay.wipro.feign.CustomerFeign;
+import com.vinay.wipro.kafka.PaymentProducer;
+import com.vinay.wipro.repo.PaymentRepo;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+public class PaymentServiceImpl implements PaymentService {
+
+    private final PaymentRepo paymentRepo;
+    private final AccountFeign accountClient;
+    private final AuditFeign auditFeign;
+    private final CustomerFeign customerFeign;
+    private final PaymentProducer paymentProducer;
+
+    @Transactional
+    public Payment processInternalPayment(Payment payment) {
+        PaymentStatus status = PaymentStatus.SUCCESS;
+
+        // ... your sender/receiver checks and balance updates
+
+        payment.setStatus(status);
+
+        Payment saved = null;
+        if (status == PaymentStatus.SUCCESS) {
+            saved = paymentRepo.save(payment);
+        }
+
+        // Post-payment operations (audit, emails)
+        try {
+            AuditDTO auditDTO = new AuditDTO();
+            auditDTO.setFromAccount(payment.getFromAccountNumber());
+            auditDTO.setToAccount(payment.getToAccountNumber());
+            auditDTO.setAmount(payment.getAmount());
+            auditDTO.setStatus(status.name());
+            auditDTO.setExternal(payment.isExternal());
+            auditFeign.logTransaction(auditDTO);
+
+            Long senderId = accountClient.getCustomerId(payment.getFromAccountNumber());
+            Long receiverId = accountClient.getCustomerId(payment.getToAccountNumber());
+
+            String senderEmail = customerFeign.getEmail(senderId);
+            String receiverEmail = customerFeign.getEmail(receiverId);
+
+            EmailDTO emailDTO = new EmailDTO();
+            emailDTO.setEmail(senderEmail);
+            emailDTO.setSubject("Transaction Update");
+            emailDTO.setBody(payment.getStatus());
+            emailDTO.setAmount(payment.getAmount());
+
+            EmailDTO receiveEmailDTO = new EmailDTO();
+            receiveEmailDTO.setEmail(receiverEmail);
+            receiveEmailDTO.setSubject("Transaction Update");
+            receiveEmailDTO.setBody(payment.getStatus());
+            receiveEmailDTO.setAmount(payment.getAmount());
+
+            paymentProducer.sendPayment(emailDTO);
+            paymentProducer.sendPayment(receiveEmailDTO);
+        } catch (Exception e) {
+            // Log errors but do not fail the payment
+            e.printStackTrace();
+        }
+
+        return saved; // returns saved Payment entity
+    }
+
+
+    @Transactional
+    public Payment processExternalPayment(Payment payment) {
+        PaymentStatus status = PaymentStatus.SUCCESS;
+
+        // Fetch sender account details
+        AccountFeign.AccountResponse sender = accountClient.getAccountByNumber(payment.getFromAccountNumber());
+        if (sender == null || sender.balance < payment.getAmount()) {
+            status = PaymentStatus.FAILED;
+        }
+
+        if (status == PaymentStatus.SUCCESS) {
+            sender.balance -= payment.getAmount();
+            accountClient.updateAccountBalance(sender.accountNumber, sender.balance);
+
+            payment.setExternal(true);
+        }
+
+        payment.setStatus(status);
+
+        // Save in Payment DB only if successful
+        Payment saved = null;
+        if (status == PaymentStatus.SUCCESS) {
+            saved = paymentRepo.save(payment);
+        }
+
+        // Send transaction details to Audit Service (MongoDB)
+        AuditDTO auditDTO = new AuditDTO();
+        auditDTO.setFromAccount(payment.getFromAccountNumber());
+        auditDTO.setToAccount(payment.getToAccountNumber());
+        auditDTO.setAmount(payment.getAmount());
+        auditDTO.setStatus(status.name());
+        auditDTO.setExternal(payment.isExternal());
+        
+        
+
+        auditFeign.logTransaction(auditDTO);
+        Long senderid=accountClient.getCustomerId(payment.getFromAccountNumber());
+        Long receiverid=accountClient.getCustomerId(payment.getToAccountNumber());
+        String sendEmail=customerFeign.getEmail(senderid);
+        String receiveEmail=customerFeign.getEmail(receiverid);
+        
+        EmailDTO  senderemailDTO= new EmailDTO();
+        
+	        senderemailDTO.setEmail(sendEmail);
+	        senderemailDTO.setSubject("Transaction Update");
+	        senderemailDTO.setBody(payment.getStatus());
+	        senderemailDTO.setAmount(payment.getAmount());
+	        paymentProducer.sendPayment(senderemailDTO);
+	        
+	      
+	        EmailDTO  receiveemailDTO= new EmailDTO();
+	        receiveemailDTO.setEmail(receiveEmail);
+	        receiveemailDTO.setSubject("Transaction Update");
+	        receiveemailDTO.setBody(payment.getStatus());
+	        receiveemailDTO.setAmount(payment.getAmount());
+	        paymentProducer.sendPayment(receiveemailDTO);
+	    
+        return saved;
+    }
+}

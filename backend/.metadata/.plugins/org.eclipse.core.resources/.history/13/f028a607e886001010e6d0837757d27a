@@ -1,0 +1,18 @@
+package com.vinay.wipro.kafka;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.stereotype.Service;
+
+import com.vinay.wipro.entities.Payment;
+
+@Service
+@RequiredArgsConstructor
+public class NotificationProducer {
+
+    private final KafkaTemplate<String, String> kafkaTemplate;
+
+    public void sendNotification(Payment payment) {
+    	kafkaTemplate.Send("payment-topic", payment);
+    }
+}

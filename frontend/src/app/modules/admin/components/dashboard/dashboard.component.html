@@ -1,0 +1,82 @@
+<mat-toolbar color="primary" class="navbar">
+  <span class="text-xl font-bold">🏦 TrustBank Admin Dashboard</span>
+  <span class="example-spacer"></span>
+  <button mat-button color="accent">Logout</button>
+</mat-toolbar>
+
+<div class="dashboard-container">
+  <mat-tab-group>
+
+    <mat-tab label="👥 Customers">
+      <div class="section">
+        <h2>All Customers</h2>
+        <div class="search-bar">
+          <mat-form-field appearance="outline">
+            <mat-label>Search by Name</mat-label>
+            <input matInput [(ngModel)]="customerSearch" placeholder="Enter customer name">
+          </mat-form-field>
+          <button mat-raised-button color="primary" (click)="searchCustomers()">Search</button>
+        </div>
+
+        <table mat-table [dataSource]="dummyCustomers" class="mat-elevation-z8">
+          <ng-container matColumnDef="id"><th mat-header-cell *matHeaderCellDef>ID</th><td mat-cell *matCellDef="let c">{{ c.id }}</td></ng-container>
+          <ng-container matColumnDef="name"><th mat-header-cell *matHeaderCellDef>Name</th><td mat-cell *matCellDef="let c">{{ c.name }}</td></ng-container>
+          <ng-container matColumnDef="email"><th mat-header-cell *matHeaderCellDef>Email</th><td mat-cell *matCellDef="let c">{{ c.email }}</td></ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="['id','name','email']"></tr>
+          <tr mat-row *matRowDef="let row; columns: ['id','name','email']"></tr>
+        </table>
+
+        <mat-paginator [length]="100" [pageSize]="customerSize" [pageSizeOptions]="[5,10,20]" (page)="changeCustomerPage($event)">
+        </mat-paginator>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="💼 Accounts">
+      <div class="section">
+        <h2>All Accounts</h2>
+        <div class="search-bar">
+          <mat-form-field appearance="outline">
+            <mat-label>Search by Account Number</mat-label>
+            <input matInput [(ngModel)]="accountSearch" placeholder="Enter account number">
+          </mat-form-field>
+          <button mat-raised-button color="primary" (click)="searchAccounts()">Search</button>
+        </div>
+
+        <table mat-table [dataSource]="dummyAccounts" class="mat-elevation-z8">
+          <ng-container matColumnDef="accountNumber"><th mat-header-cell *matHeaderCellDef>Account Number</th><td mat-cell *matCellDef="let a">{{ a.accountNumber }}</td></ng-container>
+          <ng-container matColumnDef="userName"><th mat-header-cell *matHeaderCellDef>User</th><td mat-cell *matCellDef="let a">{{ a.userName }}</td></ng-container>
+          <ng-container matColumnDef="balance"><th mat-header-cell *matHeaderCellDef>Balance</th><td mat-cell *matCellDef="let a">{{ a.balance | currency:'INR' }}</td></ng-container>
+          <ng-container matColumnDef="accountType"><th mat-header-cell *matHeaderCellDef>Type</th><td mat-cell *matCellDef="let a">{{ a.accountType }}</td></ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="['accountNumber','userName','balance','accountType']"></tr>
+          <tr mat-row *matRowDef="let row; columns: ['accountNumber','userName','balance','accountType']"></tr>
+        </table>
+
+        <mat-paginator [length]="100" [pageSize]="accountSize" [pageSizeOptions]="[5,10,20]" (page)="changeAccountPage($event)">
+        </mat-paginator>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="💳 Transactions">
+      <div class="section">
+        <h2>All Transactions</h2>
+        <table mat-table [dataSource]="dummyTransactions" class="mat-elevation-z8">
+          <ng-container matColumnDef="id"><th mat-header-cell *matHeaderCellDef>ID</th><td mat-cell *matCellDef="let t">{{ t.id }}</td></ng-container>
+          <ng-container matColumnDef="fromAccount"><th mat-header-cell *matHeaderCellDef>From</th><td mat-cell *matCellDef="let t">{{ t.fromAccount }}</td></ng-container>
+          <ng-container matColumnDef="toAccount"><th mat-header-cell *matHeaderCellDef>To</th><td mat-cell *matCellDef="let t">{{ t.toAccount}}</td></ng-container>
+          <ng-container matColumnDef="amount"><th mat-header-cell *matHeaderCellDef>Amount</th><td mat-cell *matCellDef="let t">{{ t.amount | currency:'INR' }}</td></ng-container>
+          <ng-container matColumnDef="type"><th mat-header-cell *matHeaderCellDef>Status</th><td mat-cell *matCellDef="let t">{{ t.status }}</td></ng-container>
+          <ng-container matColumnDef="date"><th mat-header-cell *matHeaderCellDef>IsExternal</th><td mat-cell *matCellDef="let t">{{ t.external }}</td></ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="['id','fromAccount','toAccount','amount','type','date']"></tr>
+          <tr mat-row *matRowDef="let row; columns: ['id','fromAccount','toAccount','amount','type','date']"></tr>
+        </table>
+
+        <mat-paginator [length]="100" [pageSize]="transactionSize" [pageSizeOptions]="[5,10,20]" (page)="changeTransactionPage($event)">
+        </mat-paginator>
+      </div>
+    </mat-tab>
+
+  </mat-tab-group>
+</div>

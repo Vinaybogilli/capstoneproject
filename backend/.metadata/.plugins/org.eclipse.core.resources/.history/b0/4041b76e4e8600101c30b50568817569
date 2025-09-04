@@ -1,0 +1,49 @@
+package com.vinay.wipro.controller;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.vinay.wipro.entity.Account;
+import com.vinay.wipro.service.AccountService;
+
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
+
+@RestController
+@AllArgsConstructor
+@RequestMapping("/api/bank")
+public class AccountController {
+	
+	private final AccountService accountService;
+	
+	@PostMapping("/createaccount")
+	public ResponseEntity<Account> createAccount(@Valid @RequestBody Account account)
+	{
+		Account savedAccount=accountService.createAccount(account);
+		return ResponseEntity.ok(savedAccount);
+	}
+	
+	@GetMapping("/getaccountbyid/{id}")
+	public ResponseEntity<Account> getAccountById(@PathVariable Long id){
+		
+		return ResponseEntity.ok(accountService.getAccountById(id));
+	}
+	
+	@GetMapping("/checkbalance/{id}")
+	public ResponseEntity<Long> getAccountBalance(@PathVariable Long id){
+		return ResponseEntity.ok(accountService.getAccountBalance(id));
+	}
+	
+	@GetMapping("/{accountNumber}")
+    public ResponseEntity<Account> getAccountByNumber(@PathVariable String accountNumber) {
+        Account account = accountService.getAccountByNumber(accountNumber);
+        return ResponseEntity.ok(account);
+    }
+	
+
+}

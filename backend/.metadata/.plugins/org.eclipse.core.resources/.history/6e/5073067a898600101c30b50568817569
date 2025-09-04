@@ -1,0 +1,34 @@
+package com.vinay.wipro.config;
+
+
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import com.example.customer.filter.JwtRoleFilter;
+
+@Configuration
+@EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true) // enables @PreAuthorize
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+
+    private final JwtRoleFilter jwtRoleFilter;
+
+    public SecurityConfig(JwtRoleFilter jwtRoleFilter) {
+        this.jwtRoleFilter = jwtRoleFilter;
+    }
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http
+            .csrf().disable() 
+            .authorizeRequests()
+            .anyRequest().authenticated() // all requests need authentication
+            .and()
+            .addFilterBefore(jwtRoleFilter, UsernamePasswordAuthenticationFilter.class);
+    }
+}

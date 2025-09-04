@@ -1,0 +1,5 @@
+package com.vinay.wipro.dto;
+
+public class AccountDTO {
+
+}

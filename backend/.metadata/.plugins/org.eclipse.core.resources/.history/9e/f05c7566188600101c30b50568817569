@@ -1,0 +1,15 @@
+package com.vinay.wipro.service;
+
+import com.vinay.wipro.entity.Account;
+
+import jakarta.validation.Valid;
+
+public interface AccountService {
+
+	Account createAccount(@Valid AccountService accountService);
+
+	Account getAccountById(Long id);
+
+	Object getAccountBalance(Long id);
+
+}

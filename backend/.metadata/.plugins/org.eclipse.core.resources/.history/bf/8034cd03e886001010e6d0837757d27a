@@ -1,0 +1,5 @@
+package com.vinay.wipro.kafka;
+
+public class PaymentProducer {
+
+}

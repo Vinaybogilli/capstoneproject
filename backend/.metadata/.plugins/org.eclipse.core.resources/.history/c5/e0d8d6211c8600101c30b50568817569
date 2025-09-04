@@ -1,0 +1,36 @@
+package com.vinay.wipro.service;
+
+import org.springframework.stereotype.Service;
+
+import com.vinay.wipro.entity.Account;
+import com.vinay.wipro.repo.Accountrepo;
+
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
+
+@Service
+@AllArgsConstructor
+public class AccountServiceImpl implements AccountService {
+
+	private final Accountrepo accountrepo;
+	
+	
+	@Override
+	public Account createAccount(@Valid AccountService accountService) {
+		
+		return null;
+	}
+
+	@Override
+	public Account getAccountById(Long id) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Long getAccountBalance(Long id) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+}

@@ -1,0 +1,5 @@
+package com.vinay.wipro.controller;
+
+public class PaymentController {
+
+}

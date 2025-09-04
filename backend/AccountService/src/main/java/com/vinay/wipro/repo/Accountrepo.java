@@ -1,0 +1,17 @@
+package com.vinay.wipro.repo;
+
+import java.util.Optional;
+
+import org.springframework.data.jpa.repository.support.JpaRepositoryImplementation;
+
+import com.vinay.wipro.entity.Account;
+
+public interface Accountrepo extends JpaRepositoryImplementation<Account, Long> {
+
+	Optional<Account> findByAccountNumber(String accountNumber);
+
+	
+
+	Optional<Account> findBycustomerId(Long id);
+
+}
